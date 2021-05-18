@@ -6,3 +6,8 @@ file(GLOB rs_in_cpp_APPTEST_FILES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp"
 )
 add_executable(rs_in_cpp_APPTEST ${rs_in_cpp_APPTEST_FILES})
+
+set_target_properties(rs_in_cpp PROPERTIES 
+    CXX_STANDARD 17
+    # CXX_STANDARD_REQUIRED ON
+)
