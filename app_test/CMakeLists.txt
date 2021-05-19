@@ -7,7 +7,9 @@ file(GLOB rs_in_cpp_APPTEST_FILES
 )
 add_executable(rs_in_cpp_APPTEST ${rs_in_cpp_APPTEST_FILES})
 
-set_target_properties(rs_in_cpp PROPERTIES 
+set_target_properties(rs_in_cpp_APPTEST PROPERTIES 
     CXX_STANDARD 17
-    # CXX_STANDARD_REQUIRED ON
+    CXX_STANDARD_REQUIRED ON
 )
+
+target_link_libraries(rs_in_cpp_APPTEST rs_in_cpp)
