@@ -3,6 +3,8 @@
 #endif
 #include <functional>
 #include <tuple>
+
+#define MAKE_MULTIPLE template <Patterns<input_t> NewPattern> Multiple<input_t, self_t, NewPattern> operator| (NewPattern v){return Multiple<input_t, self_t, NewPattern>(std::move(*this), std::move(v)); }
 namespace rust
 {
     namespace pattern
@@ -10,7 +12,7 @@ namespace rust
         template <typename T>
         struct Value;
         template <typename T>
-        struct Ranges;
+        struct Range;
         // template <typename ...T>
         // struct Multiple;
 
@@ -37,18 +39,13 @@ namespace rust
         template <typename Input, typename ...Patterns_t>
         struct Multiple {
             using input_t = Input;
-            using me_t = Multiple<input_t, Patterns_t...>;
+            using self_t = Multiple<input_t, Patterns_t...>;
             Multiple(Patterns_t&&... a) : m_arms(std::forward<Patterns_t>(a) ...)
             {}
             bool operator()(input_t a) {
                 return disassembly_arms<0>(a);
             };
-            template <class NewPattern>
-                requires Patterns<NewPattern, input_t>
-            Multiple<input_t, me_t, NewPattern> operator |(NewPattern v)
-            {
-                return Multiple<input_t, me_t, NewPattern>{std::move(*this), std::move(v)};
-            }
+            MAKE_MULTIPLE
         private:
             template <size_t i, typename T>
             inline bool disassembly_arms(T a) {
@@ -65,18 +62,14 @@ namespace rust
         struct Value
         {
             using input_t = Input;
+            using self_t = Value<Input>;
             Value(input_t v) : value(v)
             {}
             bool operator()(input_t a) {
                 return a == value;
             };
-            template <class NewPattern>
-                requires Patterns<NewPattern, input_t>
-            Multiple<input_t, Value<input_t>, NewPattern> operator |(NewPattern v)
-            {
-                return Multiple<input_t, Value<input_t>, NewPattern>(std::move(*this), std::move(v));
-            }
-
+            MAKE_MULTIPLE
+        private:
             input_t value;
         };
         template <typename Input, typename Output, typename ...Arms>
