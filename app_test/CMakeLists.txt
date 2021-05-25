@@ -8,7 +8,7 @@ file(GLOB rs_in_cpp_APPTEST_FILES
 add_executable(rs_in_cpp_APPTEST ${rs_in_cpp_APPTEST_FILES})
 
 set_target_properties(rs_in_cpp_APPTEST PROPERTIES 
-    CXX_STANDARD 17
+    CXX_STANDARD 20
     CXX_STANDARD_REQUIRED ON
 )
 

@@ -11,6 +11,6 @@ add_library(rs_in_cpp INTERFACE ${rs_in_cpp_FILES})
 target_include_directories(rs_in_cpp INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 set_target_properties(rs_in_cpp PROPERTIES 
-    CXX_STANDARD 17
+    CXX_STANDARD 20
     CXX_STANDARD_REQUIRED ON
 )
