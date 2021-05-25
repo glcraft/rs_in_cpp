@@ -93,16 +93,18 @@ namespace rust
             U map_or_else(std::function<U(error_t)> fn_is_err, std::function<U(ok_t)> fn_is_ok) {
                 RUST_OK_HELPER(fn_is_ok(std::forward<ok_t>(std::get<ok_v>(m_result))),fn_is_err(std::forward<error_t>(std::get<error_v>(m_result))))
             }
+            /// and is used in C++ for "&&"
             template <class U>
-            ResultOk<U> and(ResultOk<U> res) noexcept {
+            ResultOk<U> and_r(ResultOk<U> res) noexcept {
                 RUST_OK_HELPER(res,ResultOk<U>::Err(std::forward<error_t>(std::get<error_v>(m_result))))
             }
             template <class U>
             ResultOk<U> and_then(std::function<ResultOk<U>(ok_t)> fn_and) {
                 RUST_OK_HELPER(fn_and(std::forward<ok_t>(std::get<ok_v>(m_result))),ResultOk<U>::Err(std::forward<error_t>(std::get<error_v>(m_result))))
             }
+            /// or is used in C++ for "||"
             template <class F>
-            ResultErr<F> or(ResultErr<F> res) noexcept {
+            ResultErr<F> or_r(ResultErr<F> res) noexcept {
                 RUST_OK_HELPER(ResultErr<F>::Ok(std::forward<ok_t>(std::get<ok_v>(m_result))),res)
             }
             template <class F>
@@ -133,9 +135,9 @@ namespace rust
     public:
         using ok_t = Ok_T;
         using error_t = Err_T;
-        Result(ok_t ok_result) : m_result(std::forward<ok_t>(ok_result))
+        Result(ok_t ok_result) : base_t::m_result(std::forward<ok_t>(ok_result))
         {}
-        Result(error_t err_result) : m_result(std::forward<error_t>(err_result))
+        Result(error_t err_result) : base_t::m_result(std::forward<error_t>(err_result))
         {}
         static Result<ok_t, error_t> Ok(ok_t ok_result) noexcept {
             return Result{value_t{std::in_place_index<0>, ok_result}};
