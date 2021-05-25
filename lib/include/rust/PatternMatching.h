@@ -7,17 +7,21 @@ namespace rust
 {
     namespace pattern
     {
+        template <typename T>
+        struct Value;
+        template <typename T>
+        struct Ranges;
+        // template <typename ...T>
+        // struct Multiple;
+
         #ifdef __cpp_concepts
-        template<typename T, typename U>
-        concept IsEqualComparable = requires(T a, U b) {
-            { a == b } -> std::convertible_to<bool>;
-        };
-        template<typename T, typename U>
-        concept IsComparable = requires(T a, U b) {
-            { a == b } -> std::convertible_to<bool>;
-            { a < b } -> std::convertible_to<bool>;
-            { a > b } -> std::convertible_to<bool>;
-        };
+        template <typename T, typename ...Types>
+        concept same_several = (std::same_as<T, Types> || ...);
+        template <typename T, typename Input>
+        concept Patterns = //same_several<T, Value<Input>, Ranges<Input>>;
+            requires(T a, Input inp) {
+                {a(inp)} -> std::convertible_to<bool>;
+            };
         #endif
         
         // struct Base
@@ -29,40 +33,51 @@ namespace rust
         //         return true;
         //     }
         // };
-        template <typename ...Pattern>
+        
+        template <typename Input, typename ...Patterns_t>
         struct Multiple {
-            Multiple(Pattern&&... a) : m_arms(std::forward<Pattern>(a) ...)
+            using input_t = Input;
+            using me_t = Multiple<input_t, Patterns_t...>;
+            Multiple(Patterns_t&&... a) : m_arms(std::forward<Patterns_t>(a) ...)
             {}
-            template <typename T>
-            bool operator()(T a) {
+            bool operator()(input_t a) {
                 return disassembly_arms<0>(a);
             };
+            template <class NewPattern>
+                requires Patterns<NewPattern, input_t>
+            Multiple<input_t, me_t, NewPattern> operator |(NewPattern v)
+            {
+                return Multiple<input_t, me_t, NewPattern>{std::move(*this), std::move(v)};
+            }
         private:
             template <size_t i, typename T>
             inline bool disassembly_arms(T a) {
                 if (std::get<i>(m_arms)(a))
                     return true;
-                if constexpr(i<sizeof...(Pattern))
+                if constexpr(i<sizeof...(Patterns_t)-1)
                     return disassembly_arms<i+1>(a);
                 else 
                     return false;
             }
-            std::tuple<Pattern...> m_arms;
+            std::tuple<Patterns_t...> m_arms;
         };
-        template <typename T>
+        template <typename Input>
         struct Value
         {
-            Value(T v) : value(v)
+            using input_t = Input;
+            Value(input_t v) : value(v)
             {}
-            bool operator()(T a) {
+            bool operator()(input_t a) {
                 return a == value;
             };
-            Multiple<Value<T>, Value<T>> operator |(Value<T> v)
+            template <class NewPattern>
+                requires Patterns<NewPattern, input_t>
+            Multiple<input_t, Value<input_t>, NewPattern> operator |(NewPattern v)
             {
-                return Multiple<Value<T>, Value<T>>(*this, v);
+                return Multiple<input_t, Value<input_t>, NewPattern>(std::move(*this), std::move(v));
             }
 
-            T value;
+            input_t value;
         };
         template <typename Input, typename Output, typename ...Arms>
         Output match(Input& v, Arms... arms)
