@@ -13,9 +13,14 @@ int main()
     {
         using namespace rust::pattern;
         
-        auto test = Value(2) | Value(4);
-        for(auto i=1;i<10;i++)
-            std::cout << i << ": " << (test(i) ? "true" : "false") << '\n';
+        // auto test = Value(2) | [](int i) ->bool{ return true; } | Value(8);
+        auto test = Value(2) >> [](int t) -> int{
+            std::cout << "test t: "<<t << '\n';
+            return t;
+        };
+        test(2);
+        // for(auto i=1;i<10;i++)
+        //     std::cout << i << ": " << (test(i) ? "true" : "false") << '\n';
     }
 
     // Ok assertion
