@@ -72,6 +72,20 @@ namespace rust
         private:
             input_t value;
         };
+        template <typename Input>
+        struct Range
+        {
+            using input_t = Input;
+            using self_t = Range<Input>;
+            Range(input_t from, input_t to_exc) : value(from, to_exc)
+            {}
+            bool operator()(input_t a) {
+                return a >= value.first && a < value.second;
+            };
+            MAKE_MULTIPLE
+        private:
+            std::pair<input_t, input_t> value;
+        };
         template <typename Input, typename Output, typename ...Arms>
         Output match(Input& v, Arms... arms)
         {
