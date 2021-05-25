@@ -9,32 +9,16 @@ namespace rust
 {
     namespace pattern
     {
-        template <typename T>
-        struct Value;
-        template <typename T>
-        struct Range;
-        // template <typename ...T>
-        // struct Multiple;
 
         #ifdef __cpp_concepts
         template <typename T, typename ...Types>
         concept same_several = (std::same_as<T, Types> || ...);
         template <typename T, typename Input>
-        concept Patterns = //same_several<T, Value<Input>, Ranges<Input>>;
+        concept Patterns =
             requires(T a, Input inp) {
                 {a(inp)} -> std::convertible_to<bool>;
             };
         #endif
-        
-        // struct Base
-        // {
-        //     // template <typename ...Args>
-        //     bool operator >>(std::function<void()> fn_ok) // Args...
-        //     {
-        //         fn_ok();
-        //         return true;
-        //     }
-        // };
         
         template <typename Input, typename ...Patterns_t>
         struct Multiple {
@@ -86,24 +70,6 @@ namespace rust
         private:
             std::pair<input_t, input_t> value;
         };
-        template <typename Input, typename Output, typename ...Arms>
-        Output match(Input& v, Arms... arms)
-        {
-            std::optional<Output> res;
-            // ([&res] () mutable {
-            //     if (arms())
-            //         res = 
-            // }, ...)
-        }
-        // template <typename Input, typename Output>
-        // struct match 
-        // {
-        //     template <typename ...Arms>
-        //     match(T& v, Arms arms...) {
-
-        //     }
-        //     Output operator();
-        // };
     } // namespace pattern
     
     
