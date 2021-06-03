@@ -4,6 +4,7 @@ project(rs_in_cpp LANGUAGES CXX VERSION 0.0.1)
 
 file(GLOB rs_in_cpp_FILES
     "${CMAKE_CURRENT_SOURCE_DIR}/include/rust/Result.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/rust/Iterators.h"
 )
 
 add_library(rs_in_cpp INTERFACE ${rs_in_cpp_FILES})

@@ -2,6 +2,7 @@
 #include <cassert>
 #include <string>
 #include <rust/Result.h>
+#include <rust/Iterators.h>
 #include <rust/Macros.h>
 int main()
 {
@@ -91,19 +92,19 @@ int main()
     {
         auto x1 = Result<int, std::string_view>::Ok(2);
         auto y1 = Result<std::string_view, std::string_view>::Err("late error");
-        assert_eq(x1.and(y1).err().value(), "late error");
+        assert_eq(x1.and_r(y1).err().value(), "late error");
 
         auto x2 = Result<int, std::string_view>::Err("early error");
         auto y2 = Result<std::string_view, std::string_view>::Ok("foo");
-        assert_eq(x2.and(y2).err().value(), "early error");
+        assert_eq(x2.and_r(y2).err().value(), "early error");
 
         auto x3 = Result<int, std::string_view>::Err("not a 2");
         auto y3 = Result<std::string_view, std::string_view>::Ok("late error");
-        assert_eq(x3.and(y3).err().value(), "not a 2");
+        assert_eq(x3.and_r(y3).err().value(), "not a 2");
 
         auto x4 = Result<int, std::string_view>::Ok(2);
         auto y4 = Result<std::string_view, std::string_view>::Ok("different result type");
-        assert_eq(x4.and(y4).ok().value(), "different result type");
+        assert_eq(x4.and_r(y4).ok().value(), "different result type");
     }
     //test and_then
     {
@@ -120,19 +121,19 @@ int main()
         using r_t = Result<int, std::string_view>;
         auto x1 = r_t::Ok(2);
         auto y1 = r_t::Err("late error");
-        assert_eq(x1.or<std::string_view>(y1).ok().value(), 2);
+        assert_eq(x1.or_r<std::string_view>(y1).ok().value(), 2);
 
         auto x2 = r_t::Err("early error");
         auto y2 = r_t::Ok(2);
-        assert_eq(x2.or<std::string_view>(y2).ok().value(), 2);
+        assert_eq(x2.or_r<std::string_view>(y2).ok().value(), 2);
 
         auto x3 = r_t::Err("not a 2");
         auto y3 = r_t::Err("late error");
-        assert_eq(x3.or<std::string_view>(y3).err().value(), "late error");
+        assert_eq(x3.or_r<std::string_view>(y3).err().value(), "late error");
         
         auto x4 = r_t::Ok(2);
         auto y4 = r_t::Ok(100);
-        assert_eq(x4.or<std::string_view>(y4).ok().value(), 2);
+        assert_eq(x4.or_r<std::string_view>(y4).ok().value(), 2);
     }
     //test or_else
     {
