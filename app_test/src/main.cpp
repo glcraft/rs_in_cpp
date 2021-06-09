@@ -6,36 +6,49 @@
 #include <rust/Result.h>
 #include <rust/Macros.h>
 #include <rust/PatternMatching.h>
+
+void test_result();
+
 int main()
 {
     using namespace rust;
 
     {
         using namespace rust::pattern;
-        
-        // auto test = Value(2) | [](int i) ->bool{ return true; } | Value(8);
-        auto test = Value(2) >> [](int t) -> int{
-            std::cout << "test t: "<<t << '\n';
-            return t;
+        int total = 0;
+        auto test = (Value(2) | Range(5,8)) >> [&total](int value) mutable -> int{
+            total+=value;
+            return value;
         };
-        test(2);
-        // for(auto i=1;i<10;i++)
-        //     std::cout << i << ": " << (test(i) ? "true" : "false") << '\n';
+        for(auto i=1;i<10;i++) {
+            auto value = test(i);
+            std::cout << i << ": ";
+            if (value)
+                std::cout << *value << '\n';
+            else
+                std::cout << "no value\n";
+        }
+        std::cout << "total: " << total << '\n';
+        std::cout << "check (2+5+6+7): " << (2+5+6+7) << '\n';
     }
-
+    return EXIT_SUCCESS;
+}
+void test_result()
+{
+    using namespace rust;
     // Ok assertion
     {
-        auto r = rust::Result<int, int>::Ok(1);
+        auto r = Result<int, int>::Ok(1);
         assert(r.is_ok());
     }
     //Err assertion
     {
-        auto r = rust::Result<int, int>::Err(1);
+        auto r = Result<int, int>::Err(1);
         assert(r.is_err());
     }
     // test as_ref
     {
-        auto r = rust::Result<std::string, int>::Ok("hello");
+        auto r = Result<std::string, int>::Ok("hello");
         auto r_ok = r.ok();
         assert(r_ok.has_value() && r_ok.value() == "hello");
     }
@@ -177,5 +190,4 @@ int main()
         assert_eq(r_t::Ok(2).unwrap_or_else(count), 2);
         assert_eq(r_t::Err("foo").unwrap_or_else(count), 3);
     }
-    return EXIT_SUCCESS;
 }
