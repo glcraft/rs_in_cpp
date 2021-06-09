@@ -6,6 +6,10 @@
 #include <optional>
 
 #define MAKE_MULTIPLE template <Patterns<input_t> NewPattern> Multiple<input_t, self_t, NewPattern> operator| (NewPattern v){return Multiple<input_t, self_t, NewPattern>(std::move(*this), std::move(v)); }
+#define MAKE_EXECUTE template <class T> \
+auto operator >>(T&& fn) { \
+    return Execute<Input, decltype(fn(Input{})), T, self_t>{std::move(*this), std::forward<T>(fn)}; \
+}
 namespace rust
 {
     namespace pattern
@@ -19,22 +23,19 @@ namespace rust
             requires(T a, Input inp) {
                 {a(inp)} -> std::convertible_to<bool>;
             };
-        template <typename T, typename Output>
+        template <typename T, typename Input, typename Output>
         concept FnExecute =
-            requires(T fn) {
-                {fn()} ->  std::convertible_to<Output>;
+            requires(T fn, Input a) {
+                {fn(a)} ->  std::convertible_to<Output>;
             };
         #endif
 
-        
-
-        template <typename Input, typename Output, FnExecute<Output> Fn, Patterns<Input> Pattern>
+        template <typename Input, typename Output, FnExecute<Input, Output> Fn, Patterns<Input> Pattern>
         struct Execute 
         {
             using input_t = Input;
             using output_t = Output;
-            using fn_execute = Fn;
-            Execute(Pattern p, fn_execute fn): p(p), fn(fn)
+            Execute(Pattern p, Fn fn): p(p), fn(fn)
             {}
             std::optional<output_t> operator()(input_t inp)
             {
@@ -44,14 +45,8 @@ namespace rust
             }
         private:
             Pattern p;
-            fn_execute fn;
+            Fn fn;
         };
-
-        // template<typename Input, typename Output, Patterns<Input> Pattern>
-        // Execute<Input, Output, Pattern> operator >>(Pattern&& p, std::function<Output(Input)>fn)
-        // {
-        //     return Execute(std::move(p), fn);
-        // }
         
         template <typename Input, typename ...Patterns_t>
         struct Multiple {
@@ -63,6 +58,7 @@ namespace rust
                 return disassembly_arms<0>(a);
             };
             MAKE_MULTIPLE
+            MAKE_EXECUTE
         private:
             template <size_t i, typename T>
             inline bool disassembly_arms(T a) {
@@ -86,22 +82,12 @@ namespace rust
                 return a == value;
             };
             MAKE_MULTIPLE
-
-            template<typename Output, FnExecute<Output> Fn>
-            Execute<input_t, Output, Fn, self_t> operator >>(Fn fn)
-            {
-                return Execute(std::move(*this), fn);
-            }
-            // template<typename Fn>
-            // Execute<input_t, Fn, self_t> execute(Fn fn)
-            // {
-            //     return Execute(std::move(*this), fn);
-            // }
-
-            
+            MAKE_EXECUTE
         private:
             input_t value;
         };
+        
+
         template <typename Input>
         struct Range
         {
@@ -113,6 +99,7 @@ namespace rust
                 return a >= value.first && a < value.second;
             };
             MAKE_MULTIPLE
+            MAKE_EXECUTE
 
             
         private:
