@@ -9,11 +9,13 @@ int main()
 {
     using namespace rust;
     {
-        auto vec = std::vector{0,1,2,3,4,5,6};
+        auto vec = std::vector{0,1,2};
+        auto vec_chain = std::vector{3,4,5};
         auto it = iter(vec);
         (*it).value().get() = 10;
         auto it_map = it
-            .filter([](int val) -> bool { return val%2==0; })
+            .chain(iter(vec_chain))
+            .filter([](int i){ return i%3==1; })
             .map([](int val) -> double { return static_cast<double>(val)*5.5; })
             .enumerate();
         auto value = *it_map;
