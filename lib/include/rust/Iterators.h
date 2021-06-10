@@ -1,16 +1,22 @@
 #pragma once
 #include <iterator>
 
-#define FORWARD_FUNCS template <class Fn> \
-auto map(Fn&& fn) \
-{ \
-    using U = std::remove_reference_t<decltype(fn(this->operator*().value()))>; \
-    return Map<self_type, U, Fn>(*this, std::forward<Fn>(fn)); \
+#define FORWARD_FUNCS \
+self_type operator++(int) { \
+    auto tmp = *this; \
+    this->operator++(); \
+    return tmp; \
 } \
-template <class Pred> \
-auto filter(Pred&& pred) \
+template <class FnMap> \
+auto map(FnMap&& fn) \
 { \
-    return Filter<self_type, Pred>(*this, std::forward<Pred>(pred)); \
+    using NewU = std::remove_reference_t<decltype(fn(this->operator*().value()))>; \
+    return Map<self_type, NewU, FnMap>(*this, std::forward<FnMap>(fn)); \
+} \
+template <class PredFilter> \
+auto filter(PredFilter&& pred) \
+{ \
+    return Filter<self_type, PredFilter>(*this, std::forward<PredFilter>(pred)); \
 } \
 auto enumerate() \
 { \
@@ -62,6 +68,14 @@ namespace rust
     struct ForwardIterator;
     template <typename Iter, typename U, class Fn>
     struct Map;
+    template <typename Iter, class Pred>
+    struct Filter;
+    template <typename Iter>
+    struct Enumerate;
+    template <typename Iter>
+    struct StepBy;
+    template <typename Iter1, typename Iter2>
+    struct Chain;
 
     template <typename T>
 #ifdef __cpp_lib_concepts
@@ -87,12 +101,6 @@ namespace rust
         ForwardIterator& operator++() {
             ++it;
             return *this;
-        }
-        ForwardIterator operator++(int) {
-            std::iterator_traits<self_type> t;
-            auto tmp = *this;
-            this->operator++();
-            return tmp;
         }
         output_type operator*() {
             if (it != end)
@@ -125,11 +133,14 @@ namespace rust
     }
     template <typename Iter, typename U, class Fn>
     struct Map {
+        using iterator_category = typename Iter::iterator_category;
+        using difference_type = std::ptrdiff_t;
+        using value_type = U;
+        using pointer = value_type*;
+        using reference = std::reference_wrapper<value_type>;
         using self_type = Map<Iter, U, Fn>;
         using iterator_type = Iter;
-        using value_type = U;
         using output_type = std::optional<U>;
-        using pointer = value_type*;
 
         Map(iterator_type it, Fn&& fn): it(it), fn(std::forward<Fn>(fn))
         {}
@@ -155,11 +166,14 @@ namespace rust
     };
     template <typename Iter, class Pred>
     struct Filter {
+        using iterator_category = typename Iter::iterator_category;
+        using difference_type = std::ptrdiff_t;
+        using value_type = typename Iter::value_type;
+        using pointer = value_type*;
+        using reference = std::reference_wrapper<value_type>;
         using self_type = Filter<Iter, Pred>;
         using iterator_type = Iter;
-        using value_type = typename Iter::value_type;
         using output_type = typename Iter::output_type;
-        using pointer = value_type*;
 
         Filter(iterator_type it, Pred&& pred): it(it), pred(std::forward<Pred>(pred))
         {}
@@ -186,11 +200,14 @@ namespace rust
     };
     template <typename Iter>
     struct Enumerate {
+        using iterator_category = typename Iter::iterator_category;
+        using difference_type = std::ptrdiff_t;
+        using value_type = typename Iter::value_type;
+        using pointer = value_type*;
+        using reference = std::reference_wrapper<value_type>;
         using self_type = Enumerate<Iter>;
         using iterator_type = Iter;
-        using value_type = typename Iter::value_type;
         using output_type = std::optional<std::pair<size_t, value_type>>;
-        using pointer = value_type*;
 
         Enumerate(iterator_type it): it(it), count(0)
         {}
@@ -220,11 +237,13 @@ namespace rust
     template <typename Iter>
     struct StepBy {
         using iterator_category = typename Iter::iterator_category;
+        using difference_type = std::ptrdiff_t;
+        using value_type = typename Iter::value_type;
+        using pointer = value_type*;
+        using reference = std::reference_wrapper<value_type>;
         using self_type = StepBy<Iter>;
         using iterator_type = Iter;
-        using value_type = typename Iter::value_type;
         using output_type = typename Iter::output_type;
-        using pointer = value_type*;
 
         StepBy(iterator_type it, size_t step): it(it), step(step)
         {}
@@ -252,11 +271,12 @@ namespace rust
     public:
         static_assert(std::is_same_v<typename Iter1::output_type, typename Iter2::output_type>, "Chain: the 2 iterators must returns the same type of value.");
         using iterator_category = typename Iter1::iterator_category;
-        using self_type = Chain<Iter1, Iter2>;
-        // using iterator_type = Iter;
+        using difference_type = std::ptrdiff_t;
         using value_type = typename Iter1::value_type;
-        using output_type = typename Iter1::output_type;
         using pointer = value_type*;
+        using reference = std::reference_wrapper<value_type>;
+        using self_type = Chain<Iter1, Iter2>;
+        using output_type = typename Iter1::output_type;
         Chain(Iter1 it1, Iter2 it2): itfirst(it1), itsecond(it2), current(false)
         {}
         Chain(const Chain& other) = default;

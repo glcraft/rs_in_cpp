@@ -158,8 +158,6 @@ namespace rust
         Result(value_t&& v) : base_t(std::forward<value_t>(v))
         {}
     public:
-        using ok_t = Ok_Err_T;
-        using error_t = Ok_Err_T;
         static Result<ok_t, error_t> Ok(ok_t ok_result) noexcept {
             return Result{value_t{std::in_place_index<0>, ok_result}};
         }
