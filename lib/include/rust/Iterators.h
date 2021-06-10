@@ -30,7 +30,7 @@ inline bool is_some() { \
     return it.is_some(); \
 } \
 inline bool is_none() { \
-    return it.is_none(); \
+    return !is_some(); \
 } \
 
 
