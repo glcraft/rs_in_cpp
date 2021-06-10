@@ -21,9 +21,13 @@ namespace rust
             {a.end()} -> std::convertible_to<typename T::iterator>;
         };
 #endif
-    // template <typename TypeFrom, typename TypeTo, typename FnPred>
-    //     requires map_function<FnPred, TypeFrom, TypeTo>
-    // struct Map;
+    template <typename T>
+#ifdef __cpp_lib_concepts
+        requires std::forward_iterator<T>
+#endif
+    struct ForwardIterator;
+    template <typename Iter, typename U, class Fn>
+    struct Map;
 
     template <typename T>
 #ifdef __cpp_lib_concepts
@@ -31,6 +35,7 @@ namespace rust
 #endif
     struct ForwardIterator : std::forward_iterator_tag
     {
+        using self_type = ForwardIterator<T>;
         using iterator_type = T;
         using value_type = typename T::value_type;
         using pointer = value_type*;
@@ -52,7 +57,7 @@ namespace rust
             ++it;
             return *this;
         }
-        std::optional<reference> operator*() {
+        std::optional<value_type> operator*() {
             if (it != end)
                 return *it;
             return std::nullopt;
@@ -60,10 +65,12 @@ namespace rust
         pointer operator->() {
             return it.operator->();
         }
-        // Map<T,U,Fn> map(predicate: P)
-        // {
-
-        // }
+        template <class Fn>
+        auto map(Fn&& fn)
+        {
+            using U = std::remove_reference_t<decltype(fn(this->operator*().value()))>;
+            return Map<self_type, U, Fn>(*this, std::forward<Fn>(fn));
+        }
     protected: 
         T it, end;
     };
@@ -76,4 +83,28 @@ namespace rust
     {
         return ForwardIterator(cont);   
     }
+    template <typename Iter, typename U, class Fn>
+    struct Map {
+        using iterator_type = Iter;
+        using value_type = typename Iter::value_type;
+        using result_type = std::optional<U>;
+        Map(iterator_type it, Fn&& fn): it(it), fn(std::forward<Fn>(fn))
+        {}
+        result_type operator*() {
+            auto value = *it;
+            if (value)
+                return result_type{fn(value.value())};
+            return std::nullopt;
+        }
+        Map& operator++() {
+            ++it;
+            return *this;
+        }
+        pointer operator->() {
+            return it.operator->();
+        }
+    private:
+        Iter it;
+        Fn fn;
+    };
 } // namespace rust
