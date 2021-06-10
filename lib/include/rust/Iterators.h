@@ -60,11 +60,14 @@ namespace rust
 #endif
     struct ForwardIterator : std::forward_iterator_tag
     {
+        using iterator_category = std::forward_iterator_tag;
+        using difference_type = std::ptrdiff_t;
+        using value_type = typename T::value_type;
+        using pointer = value_type*;
+        using reference = std::reference_wrapper<value_type>;
         using self_type = ForwardIterator<T>;
         using iterator_type = T;
-        using value_type = std::reference_wrapper<typename T::value_type>;
-        using output_type = std::optional<value_type>;
-        using pointer = value_type*;
+        using output_type = std::optional<reference>;
 
         ForwardIterator(iterator_type from, iterator_type to) : it(from), end(to)
         {}
@@ -75,6 +78,12 @@ namespace rust
         ForwardIterator& operator++() {
             ++it;
             return *this;
+        }
+        ForwardIterator operator++(int) {
+            std::iterator_traits<self_type> t;
+            auto tmp = *this;
+            this->operator++();
+            return tmp;
         }
         output_type operator*() {
             if (it != end)
