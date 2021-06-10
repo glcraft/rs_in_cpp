@@ -16,6 +16,13 @@ auto enumerate() \
 { \
     return Enumerate<self_type>(*this); \
 }
+#define IMPL_FUNCS \
+inline bool is_some() { \
+    return it.is_some(); \
+} \
+inline bool is_none() { \
+    return it.is_none(); \
+} \
 
 
 namespace rust
@@ -77,6 +84,13 @@ namespace rust
         pointer operator->() {
             return it.operator->();
         }
+        inline bool is_some() {
+            return it!=end;
+        }
+        inline bool is_none() {
+            return !is_some();
+        }
+
         
         FORWARD_FUNCS
     protected: 
@@ -116,6 +130,7 @@ namespace rust
         }
 
         FORWARD_FUNCS
+        IMPL_FUNCS
     private:
         Iter it;
         Fn fn;
@@ -146,6 +161,7 @@ namespace rust
         }
 
         FORWARD_FUNCS
+        IMPL_FUNCS
     private:
         Iter it;
         Pred pred;
@@ -178,6 +194,7 @@ namespace rust
         }
 
         FORWARD_FUNCS
+        IMPL_FUNCS
     private:
         Iter it;
         size_t count;
