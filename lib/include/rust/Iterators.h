@@ -51,9 +51,9 @@ namespace rust
     {
         using self_type = ForwardIterator<T>;
         using iterator_type = T;
-        using input_type = typename T::value_type;
-        using output_type = std::optional<input_type>;
-        using pointer = input_type*;
+        using value_type = typename T::value_type;
+        using output_type = std::optional<value_type>;
+        using pointer = value_type*;
 
         ForwardIterator(iterator_type from, iterator_type to) : it(from), end(to)
         {}
@@ -65,7 +65,7 @@ namespace rust
             ++it;
             return *this;
         }
-        std::optional<input_type> operator*() {
+        output_type operator*() {
             if (it != end)
                 return *it;
             return std::nullopt;
@@ -91,9 +91,9 @@ namespace rust
     struct Map {
         using self_type = Map<Iter, U, Fn>;
         using iterator_type = Iter;
-        using input_type = typename Iter::input_type;
+        using value_type = U;
         using output_type = std::optional<U>;
-        using pointer = input_type*;
+        using pointer = value_type*;
 
         Map(iterator_type it, Fn&& fn): it(it), fn(std::forward<Fn>(fn))
         {}
@@ -120,9 +120,9 @@ namespace rust
     struct Filter {
         using self_type = Filter<Iter, Pred>;
         using iterator_type = Iter;
-        using input_type = typename Iter::output_type;
-        using output_type = input_type;
-        using pointer = input_type*;
+        using value_type = typename Iter::value_type;
+        using output_type = typename Iter::output_type;
+        using pointer = value_type*;
 
         Filter(iterator_type it, Pred&& pred): it(it), pred(std::forward<Pred>(pred))
         {}
