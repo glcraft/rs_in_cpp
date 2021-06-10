@@ -109,4 +109,32 @@ namespace rust
         Iter it;
         Fn fn;
     };
+    template <typename Iter, class Pred>
+    struct Filter {
+        using self_type = Filter<Iter, Pred>;
+        using iterator_type = Iter;
+        using input_type = typename Iter::output_type;
+        using output_type = input_type;
+        using pointer = input_type*;
+
+        Filter(iterator_type it, Pred&& pred): it(it), pred(std::forward<Pred>(pred))
+        {}
+
+        output_type operator*() {
+            return it.operator*();
+        }
+        self_type& operator++() {
+            auto value = *++it;
+            while (value.has_value() && !pred(value.value())) {
+                value = *++it;
+            }
+            return *this;
+        }
+        pointer operator->() {
+            return it.operator->();
+        }
+    private:
+        Iter it;
+        Pred pred;
+    };
 } // namespace rust
