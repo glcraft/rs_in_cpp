@@ -15,6 +15,10 @@ auto filter(Pred&& pred) \
 auto enumerate() \
 { \
     return Enumerate<self_type>(*this); \
+} \
+auto step_by(size_t step) \
+{ \
+    return StepBy<self_type>(*this, step); \
 }
 #define IMPL_FUNCS \
 inline bool is_some() { \
@@ -208,6 +212,37 @@ namespace rust
         Iter it;
         size_t count;
     };
+    template <typename Iter>
+    struct StepBy {
+        using iterator_category = typename Iter::iterator_category;
+        using self_type = StepBy<Iter>;
+        using iterator_type = Iter;
+        using value_type = typename Iter::value_type;
+        using output_type = typename Iter::output_type;
+        using pointer = value_type*;
+
+        StepBy(iterator_type it, size_t step): it(it), step(step)
+        {}
+        output_type operator*() {
+            return it.operator*();
+        }
+        self_type& operator++() {
+            auto count = step;
+            while(count--!=0 && it.is_some())
+                ++it;
+            return *this;
+        }
+        pointer operator->() {
+            return it.operator->();
+        }
+
+        FORWARD_FUNCS
+        IMPL_FUNCS
+    private:
+        Iter it;
+        size_t step;
+    };
 } // namespace rust
 
 #undef FORWARD_FUNCS
+#undef IMPL_FUNCS
