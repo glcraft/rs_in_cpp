@@ -1,12 +1,30 @@
 #include <cstdlib>
 #include <cassert>
 #include <string>
+#include <iostream>
 #include <rust/Result.h>
 #include <rust/Iterators.h>
 #include <rust/Macros.h>
 int main()
 {
     using namespace rust;
+    {
+        auto vec = std::vector{0,1,2,3,4,5,6};
+        auto it = iter(vec);
+        auto it_map = it
+            .filter([](int val) -> bool { return val%2==0; })
+            .map([](int val) -> double { return static_cast<double>(val)*5.5; })
+            .enumerate();
+        auto value = *it_map;
+        while (value.has_value())
+        {
+            auto [i, v] = value.value();
+            std::cout << i << ", " << v << '\n';
+            ++it_map;
+            value = *it_map;
+        }
+    }
+    exit(0);
     // Ok assertion
     {
         auto r = rust::Result<int, int>::Ok(1);
