@@ -37,15 +37,9 @@ namespace rust
     {
         using self_type = ForwardIterator<T>;
         using iterator_type = T;
-        using value_type = typename T::value_type;
-        using pointer = value_type*;
-        using reference = value_type&;
-
-        // using iterator_category = std::forward_iterator_tag;
-        // using difference_type   = std::ptrdiff_t;
-        // using value_type        = T;
-        // using pointer           = T*;  // or also value_type*
-        // using reference         = T&;  // or also value_type&
+        using input_type = typename T::value_type;
+        using output_type = std::optional<input_type>;
+        using pointer = input_type*;
 
         ForwardIterator(iterator_type from, iterator_type to) : it(from), end(to)
         {}
@@ -57,7 +51,7 @@ namespace rust
             ++it;
             return *this;
         }
-        std::optional<value_type> operator*() {
+        std::optional<input_type> operator*() {
             if (it != end)
                 return *it;
             return std::nullopt;
@@ -70,6 +64,11 @@ namespace rust
         {
             using U = std::remove_reference_t<decltype(fn(this->operator*().value()))>;
             return Map<self_type, U, Fn>(*this, std::forward<Fn>(fn));
+        }
+        template <class Pred>
+        auto filter(Pred&& pred)
+        {
+            return Filter<self_type, Pred>(*this, std::forward<Pred>(pred));
         }
     protected: 
         T it, end;
@@ -85,18 +84,21 @@ namespace rust
     }
     template <typename Iter, typename U, class Fn>
     struct Map {
+        using self_type = Map<Iter, U, Fn>;
         using iterator_type = Iter;
-        using value_type = typename Iter::value_type;
-        using result_type = std::optional<U>;
+        using input_type = typename Iter::input_type;
+        using output_type = std::optional<U>;
+        using pointer = input_type*;
+
         Map(iterator_type it, Fn&& fn): it(it), fn(std::forward<Fn>(fn))
         {}
-        result_type operator*() {
+        output_type operator*() {
             auto value = *it;
             if (value)
-                return result_type{fn(value.value())};
+                return output_type{fn(value.value())};
             return std::nullopt;
         }
-        Map& operator++() {
+        self_type& operator++() {
             ++it;
             return *this;
         }
