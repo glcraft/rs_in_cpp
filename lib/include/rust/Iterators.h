@@ -13,6 +13,13 @@ namespace rust
         requires (Fn fn_pred, const T& value) {
             {fn(value)} -> std::convertible_to<bool>;
         };
+    template <typename T>
+    concept container = 
+        std::forward_iterator<typename T::iterator> &&
+        requires (T a) {
+            {a.begin()} -> std::convertible_to<typename T::iterator>;
+            {a.end()} -> std::convertible_to<typename T::iterator>;
+        };
 #endif
     // template <typename TypeFrom, typename TypeTo, typename FnPred>
     //     requires map_function<FnPred, TypeFrom, TypeTo>
@@ -22,25 +29,36 @@ namespace rust
 #ifdef __cpp_lib_concepts
         requires std::forward_iterator<T>
 #endif
-    struct Iterator : std::forward_iterator_tag
+    struct ForwardIterator : std::forward_iterator_tag
     {
-        using iterator_category = std::forward_iterator_tag;
-        using difference_type   = std::ptrdiff_t;
-        using value_type        = int;
-        using pointer           = int*;  // or also value_type*
-        using reference         = int&;  // or also value_type&
+        using iterator_type = T;
+        using value_type = typename T::value_type;
+        using pointer = value_type*;
+        using reference = value_type&;
 
-        template <typename U, typename Fn>
-#ifdef __cpp_lib_concepts
-            requires map_function<Fn,T,U>
-#endif
-        Iterator& operator++() {
+        // using iterator_category = std::forward_iterator_tag;
+        // using difference_type   = std::ptrdiff_t;
+        // using value_type        = T;
+        // using pointer           = T*;  // or also value_type*
+        // using reference         = T&;  // or also value_type&
+
+        ForwardIterator(iterator_type from, iterator_type to) : it(from), end(to)
+        {}
+        template<container Cont>
+        ForwardIterator(Cont& cont) : it(cont.begin()), end(cont.end())
+        {}
+
+        ForwardIterator& operator++() {
             ++it;
             return *this;
         }
-        const Iterator& operator++() {
-            ++it;
-            return *this;
+        std::optional<reference> operator*() {
+            if (it != end)
+                return *it;
+            return std::nullopt;
+        }
+        pointer operator->() {
+            return it.operator->();
         }
         // Map<T,U,Fn> map(predicate: P)
         // {
@@ -49,4 +67,13 @@ namespace rust
     protected: 
         T it, end;
     };
+    template<container Cont>
+    ForwardIterator(Cont) -> ForwardIterator<typename Cont::iterator>;
+    
+    template <container Cont>
+        requires std::forward_iterator<typename Cont::iterator>
+    ForwardIterator<typename Cont::iterator> iter(Cont& cont)
+    {
+        return ForwardIterator(cont);   
+    }
 } // namespace rust
