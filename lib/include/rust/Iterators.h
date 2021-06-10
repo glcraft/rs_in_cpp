@@ -19,6 +19,11 @@ auto enumerate() \
 auto step_by(size_t step) \
 { \
     return StepBy<self_type>(*this, step); \
+} \
+template <class NewIter> \
+auto chain(NewIter iter) \
+{ \
+    return Chain<self_type, NewIter>(*this, iter); \
 }
 #define IMPL_FUNCS \
 inline bool is_some() { \
@@ -241,6 +246,50 @@ namespace rust
     private:
         Iter it;
         size_t step;
+    };
+    template <typename Iter1, typename Iter2>
+    struct Chain {
+    public:
+        static_assert(std::is_same_v<typename Iter1::output_type, typename Iter2::output_type>, "Chain: the 2 iterators must returns the same type of value.");
+        using iterator_category = typename Iter1::iterator_category;
+        using self_type = Chain<Iter1, Iter2>;
+        // using iterator_type = Iter;
+        using value_type = typename Iter1::value_type;
+        using output_type = typename Iter1::output_type;
+        using pointer = value_type*;
+        Chain(Iter1 it1, Iter2 it2): itfirst(it1), itsecond(it2), current(false)
+        {}
+        Chain(const Chain& other) = default;
+        Chain(Chain&& other) = default;
+        output_type operator*() {
+            if (!current)
+                return *itfirst;
+            else
+                return *itsecond;
+        }
+        self_type& operator++() {
+            if (!current)
+            {
+                ++itfirst;
+                if (itfirst.is_none())
+                    current=true;
+            }
+            else
+                ++itsecond;
+            return *this;
+        }
+
+        FORWARD_FUNCS
+        inline bool is_some() {
+            return itfirst.is_some() || itsecond.is_some();
+        }
+        inline bool is_none() {
+            return !is_some();
+        }
+    private:
+        Iter1 itfirst;
+        Iter2 itsecond;
+        bool current;
     };
 } // namespace rust
 
