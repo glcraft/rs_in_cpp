@@ -55,7 +55,7 @@ namespace rust
     {
         using self_type = ForwardIterator<T>;
         using iterator_type = T;
-        using value_type = typename T::value_type;
+        using value_type = std::reference_wrapper<typename T::value_type>;
         using output_type = std::optional<value_type>;
         using pointer = value_type*;
 
@@ -71,7 +71,7 @@ namespace rust
         }
         output_type operator*() {
             if (it != end)
-                return *it;
+                return std::ref(*it);
             return std::nullopt;
         }
         pointer operator->() {
