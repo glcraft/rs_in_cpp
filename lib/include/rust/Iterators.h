@@ -1,5 +1,19 @@
 #pragma once
 #include <iterator>
+
+#define FORWARD_FUNCS template <class Fn> \
+auto map(Fn&& fn) \
+{ \
+    using U = std::remove_reference_t<decltype(fn(this->operator*().value()))>; \
+    return Map<self_type, U, Fn>(*this, std::forward<Fn>(fn)); \
+} \
+template <class Pred> \
+auto filter(Pred&& pred) \
+{ \
+    return Filter<self_type, Pred>(*this, std::forward<Pred>(pred)); \
+} \
+
+
 namespace rust
 {
 #ifdef __cpp_lib_concepts
@@ -59,17 +73,8 @@ namespace rust
         pointer operator->() {
             return it.operator->();
         }
-        template <class Fn>
-        auto map(Fn&& fn)
-        {
-            using U = std::remove_reference_t<decltype(fn(this->operator*().value()))>;
-            return Map<self_type, U, Fn>(*this, std::forward<Fn>(fn));
-        }
-        template <class Pred>
-        auto filter(Pred&& pred)
-        {
-            return Filter<self_type, Pred>(*this, std::forward<Pred>(pred));
-        }
+        
+        FORWARD_FUNCS
     protected: 
         T it, end;
     };
@@ -105,6 +110,8 @@ namespace rust
         pointer operator->() {
             return it.operator->();
         }
+
+        FORWARD_FUNCS
     private:
         Iter it;
         Fn fn;
@@ -133,6 +140,8 @@ namespace rust
         pointer operator->() {
             return it.operator->();
         }
+
+        FORWARD_FUNCS
     private:
         Iter it;
         Pred pred;
