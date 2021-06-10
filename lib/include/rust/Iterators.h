@@ -12,6 +12,10 @@ auto filter(Pred&& pred) \
 { \
     return Filter<self_type, Pred>(*this, std::forward<Pred>(pred)); \
 } \
+auto enumerate() \
+{ \
+    return Enumerate<self_type>(*this); \
+}
 
 
 namespace rust
@@ -146,4 +150,38 @@ namespace rust
         Iter it;
         Pred pred;
     };
+    template <typename Iter>
+    struct Enumerate {
+        using self_type = Enumerate<Iter>;
+        using iterator_type = Iter;
+        using value_type = typename Iter::value_type;
+        using output_type = std::optional<std::pair<size_t, value_type>>;
+        using pointer = value_type*;
+
+        Enumerate(iterator_type it): it(it), count(0)
+        {}
+
+        output_type operator*() {
+            auto value = *it;
+            if (value.has_value())
+                return std::pair{count, value.value()};
+            else
+                return std::nullopt;
+        }
+        self_type& operator++() {
+            ++it;
+            ++count;
+            return *this;
+        }
+        pointer operator->() {
+            return it.operator->();
+        }
+
+        FORWARD_FUNCS
+    private:
+        Iter it;
+        size_t count;
+    };
 } // namespace rust
+
+#undef FORWARD_FUNCS
