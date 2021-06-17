@@ -42,7 +42,14 @@ inline bool is_none() { \
 
 namespace rust
 {
-#ifdef __cpp_lib_concepts
+#if defined(__cpp_concepts) && defined(__cpp_lib_concepts)
+template <typename T>
+    concept container = 
+        std::forward_iterator<typename T::iterator> &&
+        requires (T a) {
+            {a.begin()} -> std::convertible_to<typename T::iterator>;
+            {a.end()} -> std::convertible_to<typename T::iterator>;
+        };
     template <typename Fn, typename T ,typename U>
     concept map_function =
         requires (Fn fn_pred, T value) {
@@ -53,18 +60,12 @@ namespace rust
         requires (Fn fn_pred, const T& value) {
             {fn(value)} -> std::convertible_to<bool>;
         };
-    template <typename T>
-    concept container = 
-        std::forward_iterator<typename T::iterator> &&
-        requires (T a) {
-            {a.begin()} -> std::convertible_to<typename T::iterator>;
-            {a.end()} -> std::convertible_to<typename T::iterator>;
-        };
+#   define RSINCPP_REQUIRES(c) requires c
+#else
+#   define RSINCPP_REQUIRES(c) 
 #endif
     template <typename T>
-#ifdef __cpp_lib_concepts
-        requires std::forward_iterator<T>
-#endif
+        RSINCPP_REQUIRES(std::forward_iterator<T>)
     struct ForwardIterator;
     template <typename Iter, typename U, class Fn>
     struct Map;
@@ -78,9 +79,7 @@ namespace rust
     struct Chain;
 
     template <typename T>
-#ifdef __cpp_lib_concepts
-        requires std::forward_iterator<T>
-#endif
+        RSINCPP_REQUIRES(std::forward_iterator<T>)
     struct ForwardIterator : std::forward_iterator_tag
     {
         using iterator_category = std::forward_iterator_tag;
@@ -94,7 +93,8 @@ namespace rust
 
         ForwardIterator(iterator_type from, iterator_type to) : it(from), end(to)
         {}
-        template<container Cont>
+        template<class Cont>
+            RSINCPP_REQUIRES(container<Cont>)
         ForwardIterator(Cont& cont) : it(cont.begin()), end(cont.end())
         {}
 
@@ -121,11 +121,12 @@ namespace rust
     protected: 
         T it, end;
     };
-    template<container Cont>
+    template<class Cont>
+        RSINCPP_REQUIRES(container<Cont>)
     ForwardIterator(Cont) -> ForwardIterator<typename Cont::iterator>;
     
-    template <container Cont>
-        requires std::forward_iterator<typename Cont::iterator>
+    template<class Cont>
+        RSINCPP_REQUIRES(container<Cont> && std::forward_iterator<typename Cont::iterator>)
     ForwardIterator<typename Cont::iterator> iter(Cont& cont)
     {
         return ForwardIterator(cont);   
@@ -314,3 +315,4 @@ namespace rust
 
 #undef RSINCPP_FORWARD_FUNCS
 #undef RSINCPP_IMPL_FUNCS
+#undef RSINCPP_REQUIRES
