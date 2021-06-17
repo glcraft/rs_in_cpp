@@ -1,7 +1,7 @@
 #pragma once
 #include <iterator>
 
-#define FORWARD_FUNCS \
+#define RSINCPP_FORWARD_FUNCS \
 self_type operator++(int) { \
     auto tmp = *this; \
     this->operator++(); \
@@ -31,7 +31,7 @@ auto chain(NewIter iter) \
 { \
     return Chain<self_type, NewIter>(*this, iter); \
 }
-#define IMPL_FUNCS \
+#define RSINCPP_IMPL_FUNCS \
 inline bool is_some() { \
     return it.is_some(); \
 } \
@@ -117,8 +117,7 @@ namespace rust
             return !is_some();
         }
 
-        
-        FORWARD_FUNCS
+        RSINCPP_FORWARD_FUNCS
     protected: 
         T it, end;
     };
@@ -158,8 +157,8 @@ namespace rust
             return it.operator->();
         }
 
-        FORWARD_FUNCS
-        IMPL_FUNCS
+        RSINCPP_FORWARD_FUNCS
+        RSINCPP_IMPL_FUNCS
     private:
         Iter it;
         Fn fn;
@@ -192,8 +191,8 @@ namespace rust
             return it.operator->();
         }
 
-        FORWARD_FUNCS
-        IMPL_FUNCS
+        RSINCPP_FORWARD_FUNCS
+        RSINCPP_IMPL_FUNCS
     private:
         Iter it;
         Pred pred;
@@ -228,8 +227,8 @@ namespace rust
             return it.operator->();
         }
 
-        FORWARD_FUNCS
-        IMPL_FUNCS
+        RSINCPP_FORWARD_FUNCS
+        RSINCPP_IMPL_FUNCS
     private:
         Iter it;
         size_t count;
@@ -260,8 +259,8 @@ namespace rust
             return it.operator->();
         }
 
-        FORWARD_FUNCS
-        IMPL_FUNCS
+        RSINCPP_FORWARD_FUNCS
+        RSINCPP_IMPL_FUNCS
     private:
         Iter it;
         size_t step;
@@ -299,7 +298,7 @@ namespace rust
             return *this;
         }
 
-        FORWARD_FUNCS
+        RSINCPP_FORWARD_FUNCS
         inline bool is_some() {
             return itfirst.is_some() || itsecond.is_some();
         }
@@ -313,5 +312,5 @@ namespace rust
     };
 } // namespace rust
 
-#undef FORWARD_FUNCS
-#undef IMPL_FUNCS
+#undef RSINCPP_FORWARD_FUNCS
+#undef RSINCPP_IMPL_FUNCS
