@@ -1,5 +1,6 @@
 #pragma once
 #include <iterator>
+#include <tuple>
 
 #define RSINCPP_FORWARD_FUNCS \
 self_type operator++(int) { \
@@ -286,7 +287,7 @@ template <typename T>
         Chain(Iter1 it1, Iter2 it2): itfirst(it1), itsecond(it2), current(false)
         {}
         Chain(const Chain& other) = default;
-        Chain(Chain&& other) = default;
+        Chain(Chain&& other) = default; 
         output_type operator*() {
             if (!current)
                 return *itfirst;
@@ -317,6 +318,22 @@ template <typename T>
         Iter2 itsecond;
         bool current;
     };
+    template<uint32_t IterType, typename ...Types>
+    struct Factory {
+        std::tuple<Types...> v;
+    };
+    template <typename Iter, typename FnMap>
+    auto operator>>(Iter&& iter, Factory<0, FnMap>&& f)
+    {
+        using NewU = std::remove_reference_t<decltype(std::get<0>(f.v)((*iter).value()))>;
+        return Map<std::remove_reference_t<Iter>, NewU, FnMap>(std::forward<Iter>(iter), std::forward<FnMap>(std::get<0>(f.v)));
+    }
+
+    template <class FnMap>
+    auto map(FnMap&& fn)
+    {
+        return Factory<0, FnMap>(std::forward<FnMap>(fn));
+    }
 } // namespace rust
 
 #undef RSINCPP_FORWARD_FUNCS
