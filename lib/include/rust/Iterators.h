@@ -50,15 +50,15 @@ template <typename T>
             {a.begin()} -> std::convertible_to<typename T::iterator>;
             {a.end()} -> std::convertible_to<typename T::iterator>;
         };
-    template <typename Fn, typename T ,typename U>
+    template <typename Fn, typename Input ,typename Output>
     concept map_function =
-        requires (Fn fn_pred, T value) {
-            {fn(value)} -> std::convertible_to<U>;
+        requires (Fn fn_map, Input value) {
+            {fn_map(value)} -> std::convertible_to<Output>;
         };
     template <typename Fn, typename T>
     concept predicate_function =
         requires (Fn fn_pred, const T& value) {
-            {fn(value)} -> std::convertible_to<bool>;
+            {fn_pred(value)} -> std::convertible_to<bool>;
         };
 #   define RSINCPP_REQUIRES(c) requires c
 #else
@@ -67,15 +67,18 @@ template <typename T>
     template <typename T>
         RSINCPP_REQUIRES(std::forward_iterator<T>)
     struct ForwardIterator;
-    template <typename Iter, typename U, class Fn>
+    template <typename Iter, typename Output, class FnMap>
+        RSINCPP_REQUIRES((map_function<FnMap, typename Iter::value_type, Output>))
     struct Map;
     template <typename Iter, class Pred>
+        RSINCPP_REQUIRES((predicate_function<Pred, typename Iter::value_type>))
     struct Filter;
     template <typename Iter>
     struct Enumerate;
     template <typename Iter>
     struct StepBy;
     template <typename Iter1, typename Iter2>
+        RSINCPP_REQUIRES((std::same_as<typename Iter1::value_type, typename Iter2::value_type>))
     struct Chain;
 
     template <typename T>
@@ -131,18 +134,19 @@ template <typename T>
     {
         return ForwardIterator(cont);   
     }
-    template <typename Iter, typename U, class Fn>
+    template <typename Iter, typename Output, class FnMap>
+        RSINCPP_REQUIRES((map_function<FnMap, typename Iter::value_type, Output>))
     struct Map {
         using iterator_category = typename Iter::iterator_category;
         using difference_type = std::ptrdiff_t;
-        using value_type = U;
+        using value_type = Output;
         using pointer = value_type*;
         using reference = std::reference_wrapper<value_type>;
-        using self_type = Map<Iter, U, Fn>;
+        using self_type = Map<Iter, Output, FnMap>;
         using iterator_type = Iter;
-        using output_type = std::optional<U>;
+        using output_type = std::optional<Output>;
 
-        Map(iterator_type it, Fn&& fn): it(it), fn(std::forward<Fn>(fn))
+        Map(iterator_type it, FnMap&& fn): it(it), fn(std::forward<FnMap>(fn))
         {}
         output_type operator*() {
             auto value = *it;
@@ -162,9 +166,10 @@ template <typename T>
         RSINCPP_IMPL_FUNCS
     private:
         Iter it;
-        Fn fn;
+        FnMap fn;
     };
     template <typename Iter, class Pred>
+        RSINCPP_REQUIRES((predicate_function<Pred, typename Iter::value_type>))
     struct Filter {
         using iterator_category = typename Iter::iterator_category;
         using difference_type = std::ptrdiff_t;
@@ -267,6 +272,7 @@ template <typename T>
         size_t step;
     };
     template <typename Iter1, typename Iter2>
+        RSINCPP_REQUIRES((std::same_as<typename Iter1::value_type, typename Iter2::value_type>))
     struct Chain {
     public:
         static_assert(std::is_same_v<typename Iter1::output_type, typename Iter2::output_type>, "Chain: the 2 iterators must returns the same type of value.");
