@@ -2,36 +2,6 @@
 #include <iterator>
 #include <tuple>
 
-#define RSINCPP_FORWARD_FUNCS \
-self_type operator++(int) { \
-    auto tmp = *this; \
-    this->operator++(); \
-    return tmp; \
-} \
-template <class FnMap> \
-auto map(FnMap&& fn) \
-{ \
-    using NewU = std::remove_reference_t<decltype(fn(this->operator*().value()))>; \
-    return Map<self_type, NewU, FnMap>(*this, std::forward<FnMap>(fn)); \
-} \
-template <class PredFilter> \
-auto filter(PredFilter&& pred) \
-{ \
-    return Filter<self_type, PredFilter>(*this, std::forward<PredFilter>(pred)); \
-} \
-auto enumerate() \
-{ \
-    return Enumerate<self_type>(*this); \
-} \
-auto step_by(size_t step) \
-{ \
-    return StepBy<self_type>(*this, step); \
-} \
-template <class NewIter> \
-auto chain(NewIter iter) \
-{ \
-    return Chain<self_type, NewIter>(*this, iter); \
-}
 #define RSINCPP_IMPL_FUNCS \
 inline bool is_some() { \
     return it.is_some(); \
@@ -39,6 +9,11 @@ inline bool is_some() { \
 inline bool is_none() { \
     return !is_some(); \
 } \
+self_type operator++(int) { \
+    auto tmp = *this; \
+    this->operator++(); \
+    return tmp; \
+} 
 
 
 namespace rust
@@ -61,6 +36,12 @@ template <typename T>
         requires (Fn fn_pred, const T& value) {
             {fn_pred(value)} -> std::convertible_to<bool>;
         };
+    template<typename Iter>
+    concept iterator = 
+        requires (Iter it) {
+            {++it} -> std::convertible_to<Iter&>;
+            {*it} -> std::convertible_to<std::optional<typename Iter::output_type>>;
+        };
 #   define RSINCPP_REQUIRES(c) requires c
 #else
 #   define RSINCPP_REQUIRES(c) 
@@ -69,17 +50,19 @@ template <typename T>
         RSINCPP_REQUIRES(std::forward_iterator<T>)
     struct ForwardIterator;
     template <typename Iter, typename Output, class FnMap>
-        RSINCPP_REQUIRES((map_function<FnMap, typename Iter::value_type, Output>))
+        RSINCPP_REQUIRES((iterator<Iter> && map_function<FnMap, typename Iter::value_type, Output>))
     struct Map;
     template <typename Iter, class Pred>
-        RSINCPP_REQUIRES((predicate_function<Pred, typename Iter::value_type>))
+        RSINCPP_REQUIRES((iterator<Iter> && predicate_function<Pred, typename Iter::value_type>))
     struct Filter;
     template <typename Iter>
+        RSINCPP_REQUIRES((iterator<Iter>))
     struct Enumerate;
     template <typename Iter>
+        RSINCPP_REQUIRES((iterator<Iter>))
     struct StepBy;
     template <typename Iter1, typename Iter2>
-        RSINCPP_REQUIRES((std::same_as<typename Iter1::value_type, typename Iter2::value_type>))
+        RSINCPP_REQUIRES((iterator<Iter1> && iterator<Iter2> && std::same_as<typename Iter1::value_type, typename Iter2::value_type>))
     struct Chain;
 
     template <typename T>
@@ -121,8 +104,7 @@ template <typename T>
             return !is_some();
         }
 
-        RSINCPP_FORWARD_FUNCS
-    protected: 
+        protected: 
         T it, end;
     };
     template<class Cont>
@@ -136,7 +118,7 @@ template <typename T>
         return ForwardIterator(cont);   
     }
     template <typename Iter, typename Output, class FnMap>
-        RSINCPP_REQUIRES((map_function<FnMap, typename Iter::value_type, Output>))
+        RSINCPP_REQUIRES((iterator<Iter> && map_function<FnMap, typename Iter::value_type, Output>))
     struct Map {
         using iterator_category = typename Iter::iterator_category;
         using difference_type = std::ptrdiff_t;
@@ -163,14 +145,13 @@ template <typename T>
             return it.operator->();
         }
 
-        RSINCPP_FORWARD_FUNCS
         RSINCPP_IMPL_FUNCS
     private:
         Iter it;
         FnMap fn;
     };
     template <typename Iter, class Pred>
-        RSINCPP_REQUIRES((predicate_function<Pred, typename Iter::value_type>))
+        RSINCPP_REQUIRES((iterator<Iter> && predicate_function<Pred, typename Iter::value_type>))
     struct Filter {
         using iterator_category = typename Iter::iterator_category;
         using difference_type = std::ptrdiff_t;
@@ -198,13 +179,13 @@ template <typename T>
             return it.operator->();
         }
 
-        RSINCPP_FORWARD_FUNCS
         RSINCPP_IMPL_FUNCS
     private:
         Iter it;
         Pred pred;
     };
     template <typename Iter>
+        RSINCPP_REQUIRES((iterator<Iter>))
     struct Enumerate {
         using iterator_category = typename Iter::iterator_category;
         using difference_type = std::ptrdiff_t;
@@ -234,13 +215,13 @@ template <typename T>
             return it.operator->();
         }
 
-        RSINCPP_FORWARD_FUNCS
         RSINCPP_IMPL_FUNCS
     private:
         Iter it;
         size_t count;
     };
     template <typename Iter>
+        RSINCPP_REQUIRES((iterator<Iter>))
     struct StepBy {
         using iterator_category = typename Iter::iterator_category;
         using difference_type = std::ptrdiff_t;
@@ -266,14 +247,13 @@ template <typename T>
             return it.operator->();
         }
 
-        RSINCPP_FORWARD_FUNCS
         RSINCPP_IMPL_FUNCS
     private:
         Iter it;
         size_t step;
     };
     template <typename Iter1, typename Iter2>
-        RSINCPP_REQUIRES((std::same_as<typename Iter1::value_type, typename Iter2::value_type>))
+        RSINCPP_REQUIRES((iterator<Iter1> && iterator<Iter2> && std::same_as<typename Iter1::value_type, typename Iter2::value_type>))
     struct Chain {
     public:
         static_assert(std::is_same_v<typename Iter1::output_type, typename Iter2::output_type>, "Chain: the 2 iterators must returns the same type of value.");
@@ -306,7 +286,6 @@ template <typename T>
             return *this;
         }
 
-        RSINCPP_FORWARD_FUNCS
         inline bool is_some() {
             return itfirst.is_some() || itsecond.is_some();
         }
@@ -328,14 +307,53 @@ template <typename T>
         using NewU = std::remove_reference_t<decltype(std::get<0>(f.v)((*iter).value()))>;
         return Map<std::remove_reference_t<Iter>, NewU, FnMap>(std::forward<Iter>(iter), std::forward<FnMap>(std::get<0>(f.v)));
     }
+    template <typename Iter, typename PredFilter>
+    auto operator>>(Iter&& iter, Factory<1, PredFilter>&& f)
+    {
+        return Filter<std::remove_reference_t<Iter>, PredFilter>(std::forward<Iter>(iter), std::forward<PredFilter>(std::get<0>(f.v))); 
+    }
+    template <typename Iter>
+        RSINCPP_REQUIRES(iterator<std::remove_reference_t<Iter>>)
+    auto operator>>(Iter&& iter, Factory<2> f)
+    {
+        return Enumerate<std::remove_reference_t<Iter>>(std::forward<Iter>(iter));
+    }
+    template <typename Iter>
+    auto operator>>(Iter&& iter, Factory<3, size_t>&& f)
+    {
+        return StepBy<std::remove_reference_t<Iter>>(std::forward<Iter>(iter), std::get<0>(f.v)); 
+    }
+    template <typename Iter, typename NewIter>
+        RSINCPP_REQUIRES((iterator<Iter> && iterator<NewIter> && std::same_as<typename Iter::value_type, typename NewIter::value_type>))
+    auto operator>>(Iter&& iter, Factory<4, NewIter>&& f)
+    {
+        return Chain<std::remove_reference_t<Iter>, std::remove_reference_t<NewIter>>(std::forward<Iter>(iter), std::forward<NewIter>(std::get<0>(f.v)));
+    }
 
     template <class FnMap>
     auto map(FnMap&& fn)
     {
         return Factory<0, FnMap>(std::forward<FnMap>(fn));
     }
+    template <class PredFilter> 
+    auto filter(PredFilter&& pred) 
+    { 
+        return Factory<1, PredFilter>(std::forward<PredFilter>(pred));
+    } 
+    auto enumerate() 
+    { 
+        return Factory<2>();
+    } 
+    auto step_by(size_t step) 
+    { 
+        return Factory<3, size_t>(step);
+    } 
+    template <class NewIter> 
+    auto chain(NewIter&& iter) 
+    { 
+        return Factory<4, NewIter>(std::forward<NewIter>(iter)); 
+    }
 } // namespace rust
 
-#undef RSINCPP_FORWARD_FUNCS
 #undef RSINCPP_IMPL_FUNCS
 #undef RSINCPP_REQUIRES
