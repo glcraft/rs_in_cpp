@@ -24,7 +24,7 @@ namespace rust
             else if (it.is_some())
                 return fn_separator();
             else
-                return output_type{};
+                return std::nullopt;
         }
         self_type& operator++() {
             which = !which;

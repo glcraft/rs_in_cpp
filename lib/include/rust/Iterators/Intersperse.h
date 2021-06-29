@@ -22,7 +22,7 @@ namespace rust
             else if (it.is_some())
                 return std::ref(separator);
             else
-                return output_type{};
+                return std::nullopt;
         }
         self_type& operator++() {
             which = !which;
