@@ -11,14 +11,16 @@ int main()
     using namespace rust;
     {
         auto vec = std::vector{0,1,2,3,4,5};
+        auto vec1 = std::vector{"a","b","c","d","e","f"};
         auto it_map = iter(vec)
-            >> take(3)
+            >> zip(iter(vec1))
             >> enumerate();
         auto value = *it_map;
         while (value.has_value())
         {
             auto [i, v] = value.value();
-            std::cout << std::setw(2) << i << ", " << v << '\n';
+            auto [v1, v2] = v;
+            std::cout << std::setw(2) << i << ", " << v1 << "|" << v2 << '\n';
             ++it_map;
             value = *it_map;
         }
