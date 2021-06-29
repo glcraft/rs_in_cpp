@@ -8,3 +8,4 @@
 #include "Iterators/Intersperse.h"
 #include "Iterators/IntersperseWith.h"
 #include "Iterators/Skip.h"
+#include "Iterators/Take.h"
