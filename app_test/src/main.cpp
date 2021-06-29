@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <cassert>
 #include <string>
+#include <iomanip>
 #include <iostream>
 #include <rust/Result.h>
 #include <rust/Iterators.h>
@@ -9,17 +10,15 @@ int main()
 {
     using namespace rust;
     {
-        auto vec = std::vector{0,1,2};
-        auto vec_chain = std::vector{3,4,5};
-        auto it = iter(vec);
-        auto it_map = std::move(it)
-            >> intersperse(123)
+        auto vec = std::vector{0,1,2,3,4,5};
+        auto it_map = iter(vec)
+            >> intersperse_with([i=0]() mutable {i+=11;return i;})
             >> enumerate();
         auto value = *it_map;
         while (value.has_value())
         {
             auto [i, v] = value.value();
-            std::cout << i << ", " << v << '\n';
+            std::cout << std::setw(2) << i << ", " << v << '\n';
             ++it_map;
             value = *it_map;
         }

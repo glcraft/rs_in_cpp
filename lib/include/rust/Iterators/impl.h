@@ -1,6 +1,7 @@
 #pragma once
 #include <tuple>
 #include <optional>
+#include <concepts>
 #define RSINCPP_IMPL_FUNCS \
 inline bool is_some() { \
     return it.is_some(); \
