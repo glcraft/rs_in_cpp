@@ -25,9 +25,6 @@ namespace rust
                 ++it;
             return *this;
         }
-        pointer operator->() {
-            return it.operator->();
-        }
 
         RSINCPP_IMPL_FUNCS
     private:

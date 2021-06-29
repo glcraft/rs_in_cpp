@@ -31,9 +31,6 @@ namespace rust
                 return std::ref(*it);
             return std::nullopt;
         }
-        pointer operator->() {
-            return it.operator->();
-        }
         inline bool is_some() {
             return it!=end;
         }

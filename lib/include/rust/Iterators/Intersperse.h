@@ -3,7 +3,7 @@
 namespace rust
 {
     template <typename Iter>
-        RSINCPP_REQUIRES((iterator<Iter> && std::copy_constructible<typename Iter::value_type>))
+        RSINCPP_REQUIRES((iterator<Iter>))
     struct Intersperse {
         using iterator_category = typename Iter::iterator_category;
         using difference_type = std::ptrdiff_t;
@@ -29,9 +29,6 @@ namespace rust
             if (which && it.is_some())
                 ++it;
             return *this;
-        }
-        pointer operator->() {
-            return it.operator->();
         }
 
         RSINCPP_IMPL_FUNCS
