@@ -48,25 +48,6 @@ template <typename T>
 #endif
     template <typename T>
         RSINCPP_REQUIRES(std::forward_iterator<T>)
-    struct ForwardIterator;
-    template <typename Iter, typename Output, class FnMap>
-        RSINCPP_REQUIRES((iterator<Iter> && map_function<FnMap, typename Iter::value_type, Output>))
-    struct Map;
-    template <typename Iter, class Pred>
-        RSINCPP_REQUIRES((iterator<Iter> && predicate_function<Pred, typename Iter::value_type>))
-    struct Filter;
-    template <typename Iter>
-        RSINCPP_REQUIRES((iterator<Iter>))
-    struct Enumerate;
-    template <typename Iter>
-        RSINCPP_REQUIRES((iterator<Iter>))
-    struct StepBy;
-    template <typename Iter1, typename Iter2>
-        RSINCPP_REQUIRES((iterator<Iter1> && iterator<Iter2> && std::same_as<typename Iter1::value_type, typename Iter2::value_type>))
-    struct Chain;
-
-    template <typename T>
-        RSINCPP_REQUIRES(std::forward_iterator<T>)
     struct ForwardIterator : std::forward_iterator_tag
     {
         using iterator_category = std::forward_iterator_tag;
