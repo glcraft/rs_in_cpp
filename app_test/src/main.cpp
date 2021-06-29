@@ -13,9 +13,7 @@ int main()
         auto vec_chain = std::vector{3,4,5};
         auto it = iter(vec);
         auto it_map = std::move(it)
-            >> chain(iter(vec_chain))
-            >> filter([](int i){ return i%3==1; })
-            >> map([](int val) -> double { return static_cast<double>(val)*5.; })
+            >> intersperse(123)
             >> enumerate();
         auto value = *it_map;
         while (value.has_value())
