@@ -12,7 +12,7 @@ int main()
     {
         auto vec = std::vector{0,1,2,3,4,5};
         auto it_map = iter(vec)
-            >> intersperse_with([i=0]() mutable {i+=11;return i;})
+            >> skip(2)
             >> enumerate();
         auto value = *it_map;
         while (value.has_value())

@@ -7,3 +7,4 @@
 #include "Iterators/Chain.h"
 #include "Iterators/Intersperse.h"
 #include "Iterators/IntersperseWith.h"
+#include "Iterators/Skip.h"
